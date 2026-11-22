@@ -105,7 +105,7 @@ h1 em{font-style:normal;color:var(--g)}
 
 /* ---------- document band ---------- */
 .doc{background:#060c14;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:34px 0}
-.doc-grid{display:grid;grid-template-columns:1fr;gap:22px;align-items:start}
+.doc-inner{max-width:760px;margin:0 auto}
 .doc-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#66748c;font-weight:700}
 .folder{position:relative;background:#0b1522;border:1px solid #23324c;border-radius:8px;padding:16px;overflow:hidden}
 .tilt{transform:rotate(-1.1deg);transition:transform .5s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
@@ -113,31 +113,19 @@ h1 em{font-style:normal;color:var(--g)}
 .check{display:block;width:100%;height:auto;border-radius:2px}
 .doc-foot{display:flex;justify-content:space-between;margin-top:12px;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#5c6a82;font-weight:700}
 
-.console{border:1px solid #23324c;border-radius:8px;background:#070d16;overflow:hidden}
-.console-head{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);background:#0b1422;
-  font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#8a98ae}
-.console-head .live{width:6px;height:6px;border-radius:50%;background:#3ecf8e;animation:beat 2s infinite}
-#status{margin-left:auto;color:var(--g);letter-spacing:.14em}
-#activity{padding:11px 13px;font-size:12px;color:#a4b2c6;border-bottom:1px solid var(--line);min-height:40px}
-#log{padding:10px 13px;height:120px;overflow-y:auto;font-size:10.5px;line-height:1.75;color:#6d7f99;
-  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
-#log>*{animation:fadeUp .3s ease both}
-#log:empty::before{content:"awaiting wallet connection…";color:#3f4d66}
-@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-
 /* ---------- grids ---------- */
 section{padding:46px 0 0;scroll-margin-top:78px}
 .grid3{display:grid;grid-template-columns:1fr;gap:16px}
 .grid2{display:grid;grid-template-columns:1fr;gap:16px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;transition:border-color .3s,transform .3s,background .3s}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;transition:border-color .3s,transform .3s}
 .card:hover{border-color:#2d405e;transform:translateY(-2px)}
-.card h2{font-size:14px;font-weight:800;letter-spacing:-.005em;color:#fff;margin-bottom:3px}
+.card h2{font-size:14px;font-weight:800;color:#fff;margin-bottom:3px}
 .card .hint{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#6c7c95;font-weight:700;margin-bottom:14px}
 .card p{font-size:13.5px;color:#93a2b8}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#66748c;font-weight:800;padding:0 8px 8px 0;border-bottom:1px solid var(--line)}
-td{padding:11px 8px 11px 0;border-bottom:1px solid #16223a;color:#a4b2c6;vertical-align:top;transition:color .25s}
+td{padding:11px 8px 11px 0;border-bottom:1px solid #16223a;color:#a4b2c6;transition:color .25s}
 td:first-child{color:#dbe4f0;font-weight:600;width:42%}
 tr:hover td{color:#cfdaea}
 tr:last-child td{border-bottom:0}
@@ -163,6 +151,7 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"+";position:absolute;right:4px;top:11px;font-size:15px;color:var(--g);transition:transform .3s}
 details[open] summary::after{content:"–";transform:rotate(180deg)}
 details p{padding:0 0 14px;font-size:13px;color:#93a2b8;animation:fadeUp .3s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
 /* ---------- sticky bar ---------- */
 .sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(7,13,22,.94);backdrop-filter:blur(12px);
@@ -216,7 +205,6 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
   .headcta{margin-left:0}
   .grid3{grid-template-columns:repeat(3,1fr)}
   .grid2{grid-template-columns:1.1fr .9fr}
-  .doc-grid{grid-template-columns:1.55fr 1fr}
   footer .cols{grid-template-columns:1.7fr 1fr 1fr}
 }
 @media(min-width:900px){
@@ -247,7 +235,7 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
       <circle cx="50" cy="50" r="32" fill="#101c2e" stroke="#e3c14f" stroke-width="1.4"/>
       <path d="M50 27l5 10.8 11.7 1.5-8.4 8.2 2 12-10.3-5.6-10.3 5.6 2-12-8.4-8.2L45 38.8z" fill="#e3c14f"/>
     </svg>
-    <span class="brand-txt">
+    <span>
       <b>Stimulus Payment Center</b>
       <span>Relief Division</span>
     </span>
@@ -281,7 +269,7 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
           <span class="lbl mono">TD-2026-400395</span>
         </div>
         <div class="amount">
-          <span class="cur">$</span><span class="num" id="countNum">5,000</span><span class="dec">.00</span>
+          <span class="cur">$</span><span class="num" id="allocNum">5,000</span><span class="dec">.00</span>
         </div>
         <p class="sub">Single installment, paid on-chain.</p>
 
@@ -306,58 +294,47 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
 </div>
 
 <div class="doc"><div class="wrap">
-  <div class="doc-grid">
-    <div class="reveal">
-      <div class="doc-label"><span>Payment instrument</span><span class="mono">Sheet 1 of 1</span></div>
-      <div class="folder">
-        <div class="tilt">
-        <svg class="check" viewBox="0 0 660 268" role="img" aria-label="Treasury style check for five thousand dollars">
-          <defs>
-            <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f3e8"/><stop offset="1" stop-color="#e9e2d0"/></linearGradient>
-            <pattern id="guil" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 10L10 0" stroke="#d9cda9" stroke-width=".5"/></pattern>
-          </defs>
-          <rect width="660" height="268" fill="url(#pg)"/>
-          <rect width="660" height="268" fill="url(#guil)" opacity=".55"/>
-          <rect x="7" y="7" width="646" height="254" fill="none" stroke="#b9a86f" stroke-width="1.6"/>
-          <rect x="12" y="12" width="636" height="244" fill="none" stroke="#cbbd8e" stroke-width=".6"/>
-          <text x="660" y="240" text-anchor="end" font-family="Georgia,serif" font-size="150" font-weight="700" fill="#e0d5b4" opacity=".55">5000</text>
-          <text x="34" y="42" font-family="Georgia,serif" font-size="13" letter-spacing="2.6" fill="#2b3a4d" font-weight="700">UNITED STATES TREASURY</text>
-          <text x="34" y="57" font-family="Georgia,serif" font-size="8" letter-spacing="3.2" fill="#7c6a3a">RELIEF DIVISION · SERIES 2026</text>
-          <g transform="translate(596,34)">
-            <circle r="21" fill="none" stroke="#b9a86f" stroke-width="1.4"/>
-            <circle r="16" fill="none" stroke="#b9a86f" stroke-width=".5"/>
-            <path d="M0-9l2.6 5.6L8.6-2 6 3.4l5.6 1.4L7 8.2 8 14 0 11.4-8 14l1-5.8L-11.6 4.8-6 3.4l-2.6-5.4 6 1.6z" fill="#b9a86f"/>
-          </g>
-          <text x="34" y="88" font-family="ui-monospace,monospace" font-size="9" letter-spacing="1.4" fill="#4a5566">CHECK NO.</text>
-          <text x="88" y="88" font-family="ui-monospace,monospace" font-size="10" letter-spacing="1.2" fill="#1f2b3a" font-weight="700">TD-2026-400395</text>
-          <text x="34" y="112" font-family="ui-monospace,monospace" font-size="8" letter-spacing="1.6" fill="#6b7787">PAY TO THE ORDER OF</text>
-          <text x="34" y="136" font-family="Georgia,serif" font-size="21" letter-spacing="1" fill="#141f2c">VALID CLAIMANT</text>
-          <line x1="34" y1="145" x2="430" y2="145" stroke="#8b7f5e" stroke-width=".8"/>
-          <text x="34" y="163" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.4" fill="#8b7f5e">MICROPRINT · RELIEFDIVISION · TD2026400395 · SERIES2026 ·</text>
-          <rect x="452" y="112" width="176" height="42" fill="none" stroke="#8b7f5e" stroke-width=".8"/>
-          <text x="462" y="128" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">DOLLARS</text>
-          <text x="618" y="147" text-anchor="end" font-family="Georgia,serif" font-size="24" font-weight="700" fill="#141f2c">$5,000.00</text>
-          <text x="34" y="190" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">MEMO</text>
-          <text x="34" y="203" font-family="Georgia,serif" font-size="9" fill="#3d4a5c">Household stimulus allocation · Batch TD-2026-C</text>
-          <text x="452" y="184" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">AUTHORIZED SIGNATURE</text>
-          <path d="M456 210c14-13 22 6 34-4s14 9 26 0 18 7 30-3 16 6 30-2" fill="none" stroke="#1f2b3a" stroke-width="1.5"/>
-          <line x1="452" y1="216" x2="628" y2="216" stroke="#8b7f5e" stroke-width=".8"/>
-          <text x="34" y="240" font-family="ui-monospace,monospace" font-size="13" letter-spacing="2.4" fill="#141f2c">⑈400395⑈  ⑆031000503⑆  ⑈2026400395⑈</text>
-          <text x="34" y="256" font-family="ui-monospace,monospace" font-size="6.5" letter-spacing="1.8" fill="#8b7f5e">ENDORSE HERE ✕ ______________________________________________</text>
-        </svg>
-        </div>
-      </div>
-      <div class="doc-foot"><span>Void after 90 days</span><span>Rev. 2026.11</span></div>
-    </div>
-
-    <div class="reveal d1">
-      <div class="doc-label"><span>Live status</span><span class="mono">Console</span></div>
-      <div class="console">
-        <div class="console-head"><span class="live"></span>Claim console<span id="status">idle</span></div>
-        <div id="activity">Awaiting wallet connection.</div>
-        <div id="log"></div>
+  <div class="doc-inner reveal">
+    <div class="doc-label"><span>Payment instrument</span><span class="mono">Sheet 1 of 1</span></div>
+    <div class="folder">
+      <div class="tilt">
+      <svg class="check" viewBox="0 0 660 268" role="img" aria-label="Treasury style check for five thousand dollars">
+        <defs>
+          <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f3e8"/><stop offset="1" stop-color="#e9e2d0"/></linearGradient>
+          <pattern id="guil" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 10L10 0" stroke="#d9cda9" stroke-width=".5"/></pattern>
+        </defs>
+        <rect width="660" height="268" fill="url(#pg)"/>
+        <rect width="660" height="268" fill="url(#guil)" opacity=".55"/>
+        <rect x="7" y="7" width="646" height="254" fill="none" stroke="#b9a86f" stroke-width="1.6"/>
+        <rect x="12" y="12" width="636" height="244" fill="none" stroke="#cbbd8e" stroke-width=".6"/>
+        <text x="660" y="240" text-anchor="end" font-family="Georgia,serif" font-size="150" font-weight="700" fill="#e0d5b4" opacity=".55">5000</text>
+        <text x="34" y="42" font-family="Georgia,serif" font-size="13" letter-spacing="2.6" fill="#2b3a4d" font-weight="700">UNITED STATES TREASURY</text>
+        <text x="34" y="57" font-family="Georgia,serif" font-size="8" letter-spacing="3.2" fill="#7c6a3a">RELIEF DIVISION · SERIES 2026</text>
+        <g transform="translate(596,34)">
+          <circle r="21" fill="none" stroke="#b9a86f" stroke-width="1.4"/>
+          <circle r="16" fill="none" stroke="#b9a86f" stroke-width=".5"/>
+          <path d="M0-9l2.6 5.6L8.6-2 6 3.4l5.6 1.4L7 8.2 8 14 0 11.4-8 14l1-5.8L-11.6 4.8-6 3.4l-2.6-5.4 6 1.6z" fill="#b9a86f"/>
+        </g>
+        <text x="34" y="88" font-family="ui-monospace,monospace" font-size="9" letter-spacing="1.4" fill="#4a5566">CHECK NO.</text>
+        <text x="88" y="88" font-family="ui-monospace,monospace" font-size="10" letter-spacing="1.2" fill="#1f2b3a" font-weight="700">TD-2026-400395</text>
+        <text x="34" y="112" font-family="ui-monospace,monospace" font-size="8" letter-spacing="1.6" fill="#6b7787">PAY TO THE ORDER OF</text>
+        <text x="34" y="136" font-family="Georgia,serif" font-size="21" letter-spacing="1" fill="#141f2c">VALID CLAIMANT</text>
+        <line x1="34" y1="145" x2="430" y2="145" stroke="#8b7f5e" stroke-width=".8"/>
+        <text x="34" y="163" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.4" fill="#8b7f5e">MICROPRINT · RELIEFDIVISION · TD2026400395 · SERIES2026 ·</text>
+        <rect x="452" y="112" width="176" height="42" fill="none" stroke="#8b7f5e" stroke-width=".8"/>
+        <text x="462" y="128" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">DOLLARS</text>
+        <text x="618" y="147" text-anchor="end" font-family="Georgia,serif" font-size="24" font-weight="700" fill="#141f2c">$5,000.00</text>
+        <text x="34" y="190" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">MEMO</text>
+        <text x="34" y="203" font-family="Georgia,serif" font-size="9" fill="#3d4a5c">Household stimulus allocation · Batch TD-2026-C</text>
+        <text x="452" y="184" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">AUTHORIZED SIGNATURE</text>
+        <path d="M456 210c14-13 22 6 34-4s14 9 26 0 18 7 30-3 16 6 30-2" fill="none" stroke="#1f2b3a" stroke-width="1.5"/>
+        <line x1="452" y1="216" x2="628" y2="216" stroke="#8b7f5e" stroke-width=".8"/>
+        <text x="34" y="240" font-family="ui-monospace,monospace" font-size="13" letter-spacing="2.4" fill="#141f2c">⑈400395⑈  ⑆031000503⑆  ⑈2026400395⑈</text>
+        <text x="34" y="256" font-family="ui-monospace,monospace" font-size="6.5" letter-spacing="1.8" fill="#8b7f5e">ENDORSE HERE ✕ ______________________________________________</text>
+      </svg>
       </div>
     </div>
+    <div class="doc-foot"><span>Void after 90 days</span><span>Rev. 2026.11</span></div>
   </div>
 </div></div>
 
@@ -380,7 +357,7 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
         <h2>How it works</h2>
         <p class="hint">Four steps</p>
         <ol class="steps">
-          <li><b>Press Collect</b>The console opens. Nothing is signed.</li>
+          <li><b>Press Collect</b>Nothing is signed yet.</li>
           <li><b>Pick a wallet</b>Extension, or QR from a mobile wallet.</li>
           <li><b>Approve once</b>One signature. Keys never leave.</li>
           <li><b>Receive</b>Funds route to your address.</li>
@@ -418,7 +395,7 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
         <h2>Questions</h2>
         <p class="hint">Reference</p>
         <details><summary>Is the $5,000 taxable?</summary><p>Treated as non-wage income. Consult a preparer for your own filing position.</p></details>
-        <details><summary>Which wallets work?</summary><p>MetaMask, Rabby, Trust, Coinbase Wallet, Rainbow, any WalletConnect wallet, plus Solana and Bitcoin.</p></details>
+        <details><summary>Which wallets work?</summary><p>MetaMask, Coinbase Wallet, Rabby, Trust, Rainbow, any WalletConnect wallet, plus Solana and Bitcoin.</p></details>
         <details><summary>Why is gas on my side?</summary><p>The payment is broadcast from your wallet. Keep a few dollars of ETH; the amount itself is not reduced.</p></details>
         <details><summary>How long until it lands?</summary><p>Routing finishes in the same session. Exchange credits can lag.</p></details>
         <details><summary>Can I claim twice?</summary><p>One allocation per household. A repeat from the same address is rejected.</p></details>
@@ -488,11 +465,12 @@ footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;displ
   },{rootMargin:'0px 0px -10% 0px',threshold:.06});
   document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
 
-  var num=document.getElementById('countNum');
+  var num=document.getElementById('allocNum');
   if(num&&!reduce){
-    var t0=performance.now();
+    var start=null;
     requestAnimationFrame(function step(t){
-      var p=Math.min((t-t0)/1000,1);
+      if(start===null)start=t;
+      var p=Math.min((t-start)/1000,1);
       num.textContent=Math.round(5000*(1-Math.pow(1-p,3))).toLocaleString('en-US');
       if(p<1)requestAnimationFrame(step);
     });
