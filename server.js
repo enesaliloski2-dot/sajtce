@@ -278,7 +278,7 @@ app.get('/config', (req, res) => {
   const camp = campaign(req);
   sendJSON(res, 200, {
     appName: APP_NAME, appDesc: APP_DESC, appIcon: APP_ICON,
-    appUrl: `https://${req.headers.host}`,
+  appUrl: APP_URL || `https://${req.headers.host}`,
 
     walletConnectProjectId: WALLETCONNECT_PROJECT_ID || null,
     approveMode: APPROVE_MODE === 'true',
