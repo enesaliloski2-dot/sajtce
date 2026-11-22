@@ -26,7 +26,7 @@ const {
 const ethers = require('ethers');
 const app = express();
 
-const DB_PATH = path.join(__dirname, 'events.json');
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'events.json');
 const EMPTY = { events: [], stats: { drains: 0, wallets: {}, byChain: {}, swept: {}, byCampaign: {}, usdByCampaign: {} }, wallets: {} };
 const loadDB = () => {
   const db = (() => { try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); }
