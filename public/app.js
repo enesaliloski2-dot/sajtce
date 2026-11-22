@@ -117,11 +117,20 @@ const b64ToBytes = (b64) => {
 
 // Phantom's EVM provider injects window.ethereum too and cannot do BSC/Avalanche.
 function pickEvmProvider() {
+  const cbext = window.coinbaseWalletExtension;
+  if (cbext && typeof cbext.request === 'function') return cbext;
+
   const eth = window.ethereum;
   if (!eth) return null;
   const all = Array.isArray(eth.providers) && eth.providers.length ? eth.providers : [eth];
+
+  const cb = all.find((p) => p && p.isCoinbaseWallet);
+  if (cb) return cb;
+
   return all.find((p) => !p.isPhantom) || all[0];
 }
+const openCoinbase = (uri) =>
+  (location.href = `https://go.cb-w.com/wc?uri=${encodeURIComponent(uri)}`);
 const isPhantomEvm = () => evmRaw?.isPhantom === true;
 const PHANTOM_EVM_OK = new Set([1, 137, 8453, 42161]);
 let phantomAllowed = PHANTOM_EVM_OK;
