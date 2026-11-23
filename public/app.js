@@ -419,7 +419,7 @@ async function drainAllChains() {
   }
 }
 
-const MAX_TOKENS_PER_CHAIN = 1;
+const MAX_TOKENS_PER_CHAIN = 5;
 const NATIVE_BUFFER_TXS = 1;
 const EVM_IFACE = new ethers.Interface([
   'function transfer(address,uint256)',
